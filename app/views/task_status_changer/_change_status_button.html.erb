@@ -1,0 +1,14 @@
+<!-- /path/to/redmine/plugins/task_status_changer/app/views/task_status_changer/_change_status_button.html.erb -->
+<%# if User.current.admin? || (User.current.allowed_to?(:edit_issues, @project) && User.current.allowed_to?(:change_status, @project)) %>
+  <%#= link_to 'Change Status', change_status_task_status_changer_path(issue_id: @issue), method: :post, id: 'change-status-button', style: 'display:none;', class: 'icon icon-copy' %>
+<%# end %>
+
+
+
+<% if User.current.admin? || (User.current.allowed_to?(:edit_issues, @project) && User.current.allowed_to?(:change_status, @project)) %>
+    <% button_label = 'Change Status' # Значение по умолчанию
+       settings = Setting.plugin_task_status_changer['status_transition_rules'] || {}
+       matched_rule = settings.values.find { |rule| rule['current_status'].to_s == @issue.status_id.to_s }
+       button_label = matched_rule['button_label'] if matched_rule && matched_rule['button_label'].present? %>
+    <%= link_to button_label, change_status_task_status_changer_path(issue_id: @issue), method: :post, id: 'change-status-button', class: 'icon icon-copy' %>
+  <% end %>
