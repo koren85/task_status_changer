@@ -12,57 +12,77 @@
 <h3>Status Transition Rules</h3>
 <div class="scroll-wrapper">
   <table id="status-transition-rules">
-  <thead>
-  <tr>
-    <th>Имя кнопки</th>
-    <th>Текущий статус задачи</th>
-    <th>Новый статус задачи</th>
-    <th>Кастомное поле</th>
-    <th>Проверка пользователя</th>
-    <th>Назначение пользователя</th>
-    <th>Действия</th>
-  </tr>
-  </thead>
-  <tbody>
-  <% settings = Setting.plugin_task_status_changer['status_transition_rules'] || [] %>
-  <% settings.each_with_index do |(index, rule), i| %>
-    <% rule = rule.with_indifferent_access %>
-    <tr class="status-rule" data-index="<%= i %>">
-      <td>
-        <%= text_field_tag "settings[status_transition_rules][#{i}][button_label]", rule['button_label'], maxlength: 24 %>
-      </td>
-      <td>
-        <%= select_tag "settings[status_transition_rules][#{i}][current_status]",
-                       options_from_collection_for_select(IssueStatus.all, 'id', 'name', rule['current_status']) %>
-      </td>
-      <td>
-        <%= select_tag "settings[status_transition_rules][#{i}][new_status]",
-                       options_from_collection_for_select(IssueStatus.all, 'id', 'name', rule['new_status']) %>
-      </td>
-      <td>
-        <%= select_tag "settings[status_transition_rules][#{i}][custom_field_id]",
-                       options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['custom_field_id']) %>
-      </td>
-      <td>
-        <%# Подготовка данных для выпадающего списка пользователей и групп %>
-        <% sorted_users = User.active.sorted.to_a %>
-        <% sorted_groups = Group.all.sorted.to_a %>
-        <% all_options = sorted_users + sorted_groups %>
-
-        <%= select_tag "settings[status_transition_rules][#{i}][check_user_id]",
-                       options_from_collection_for_select(all_options, 'id', 'name', rule['check_user_id']) %>
-      </td>
-      <td>
-        <%= select_tag "settings[status_transition_rules][#{i}][assign_user_id]",
-                       options_from_collection_for_select(all_options, 'id', 'name', rule['assign_user_id']) %>
-      </td>
-      <td>
-        <button type="button" class="remove-rule-button" onclick="removeRule(this)">Remove</button>
-      </td>
+    <thead>
+    <tr>
+      <th>Имя кнопки</th>
+      <th>Текущий статус задачи</th>
+      <th>Новый статус задачи</th>
+      <th>Счетчик причин (общий)</th>
+      <th>Счетчик на исправление</th>
+      <th>Счетчик Новые требования</th>
+      <th>Счетчик Консультация</th>
+      <th>Счетчик Ошибка пакета</th>
+      <th>Проверка пользователя</th>
+      <th>Назначение пользователя</th>
+      <th>Действия</th>
     </tr>
-  <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+    <% settings = Setting.plugin_task_status_changer['status_transition_rules'] || [] %>
+    <% settings.each_with_index do |(index, rule), i| %>
+      <% rule = rule.with_indifferent_access %>
+      <tr class="status-rule" data-index="<%= i %>">
+        <td>
+          <%= text_field_tag "settings[status_transition_rules][#{i}][button_label]", rule['button_label'], maxlength: 24 %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][current_status]",
+                         options_from_collection_for_select(IssueStatus.all, 'id', 'name', rule['current_status']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][new_status]",
+                         options_from_collection_for_select(IssueStatus.all, 'id', 'name', rule['new_status']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][general_counter]",
+                         options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['general_counter']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][fix_counter]",
+                         options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['fix_counter']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][new_requirements_counter]",
+                         options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['new_requirements_counter']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][consultation_counter]",
+                         options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['consultation_counter']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][error_counter]",
+                         options_from_collection_for_select(CustomField.where(type: 'IssueCustomField'), 'id', 'name', rule['error_counter']) %>
+        </td>
+        <td>
+          <%# Подготовка данных для выпадающего списка пользователей и групп %>
+          <% sorted_users = User.active.sorted.to_a %>
+          <% sorted_groups = Group.all.sorted.to_a %>
+          <% all_options = sorted_users + sorted_groups %>
+
+          <%= select_tag "settings[status_transition_rules][#{i}][check_user_id]",
+                         options_from_collection_for_select(all_options, 'id', 'name', rule['check_user_id']) %>
+        </td>
+        <td>
+          <%= select_tag "settings[status_transition_rules][#{i}][assign_user_id]",
+                         options_from_collection_for_select(all_options, 'id', 'name', rule['assign_user_id']) %>
+        </td>
+        <td>
+          <button type="button" class="remove-rule-button" onclick="removeRule(this)">Remove</button>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
 </div>
 <button type="button" onclick="addRule()">Add Rule</button>
 
@@ -120,7 +140,11 @@
             <td><input type="text" name="settings[status_transition_rules][${index}][button_label]" maxlength="24" /></td>
             <td><select name="settings[status_transition_rules][${index}][current_status]">${statusOptions}</select></td>
             <td><select name="settings[status_transition_rules][${index}][new_status]">${statusOptions}</select></td>
-            <td><select name="settings[status_transition_rules][${index}][custom_field_id]">${customFieldOptions}</select></td>
+            <td><select name="settings[status_transition_rules][${index}][general_counter]">${customFieldOptions}</select></td>
+            <td><select name="settings[status_transition_rules][${index}][fix_counter]">${customFieldOptions}</select></td>
+            <td><select name="settings[status_transition_rules][${index}][new_requirements_counter]">${customFieldOptions}</select></td>
+            <td><select name="settings[status_transition_rules][${index}][consultation_counter]">${customFieldOptions}</select></td>
+            <td><select name="settings[status_transition_rules][${index}][error_counter]">${customFieldOptions}</select></td>
             <td><select name="settings[status_transition_rules][${index}][check_user_id]">${allOptions}</select></td>
             <td><select name="settings[status_transition_rules][${index}][assign_user_id]">${allOptions}</select></td>
             <td><button type="button" onclick="removeRule(this)">Remove</button></td>

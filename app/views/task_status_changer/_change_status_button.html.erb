@@ -1,14 +1,93 @@
-<!-- /path/to/redmine/plugins/task_status_changer/app/views/task_status_changer/_change_status_button.html.erb -->
-<%# if User.current.admin? || (User.current.allowed_to?(:edit_issues, @project) && User.current.allowed_to?(:change_status, @project)) %>
-  <%#= link_to 'Change Status', change_status_task_status_changer_path(issue_id: @issue), method: :post, id: 'change-status-button', style: 'display:none;', class: 'icon icon-copy' %>
-<%# end %>
-
-
+<% button_label = 'На исправление' # Значение по умолчанию %>
+<% settings = Setting.plugin_task_status_changer['status_transition_rules'] || {} %>
+<% matched_rule = settings.values.find { |rule| rule['current_status'].to_s == @issue.status_id.to_s } %>
+<% button_label = matched_rule['button_label'] if matched_rule && matched_rule['button_label'].present? %>
 
 <% if User.current.admin? || (User.current.allowed_to?(:edit_issues, @project) && User.current.allowed_to?(:change_status, @project)) %>
-    <% button_label = 'Change Status' # Значение по умолчанию
-       settings = Setting.plugin_task_status_changer['status_transition_rules'] || {}
-       matched_rule = settings.values.find { |rule| rule['current_status'].to_s == @issue.status_id.to_s }
-       button_label = matched_rule['button_label'] if matched_rule && matched_rule['button_label'].present? %>
-    <%= link_to button_label, change_status_task_status_changer_path(issue_id: @issue), method: :post, id: 'change-status-button', class: 'icon icon-copy' %>
-  <% end %>
+  <!-- Кнопка с динамическим текстом в виде ссылки -->
+  <%= link_to button_label, '#', id: 'open-modal-button', class: 'icon icon-copy' %>
+
+  <%#= link_to button_label, change_status_task_status_changer_path(issue_id: @issue), method: :post, id: 'change-status-button', class: 'icon icon-copy' %>
+<% end %>
+
+<!-- Модальное окно -->
+<div id="custom-field-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Выберите причину:</h3>
+    <form id="custom-field-form">
+      <label><input type="checkbox" name="custom_field_option" value="fix_counter"> На исправление</label><br>
+      <label><input type="checkbox" name="custom_field_option" value="new_requirements_counter"> Новые требования</label><br>
+      <label><input type="checkbox" name="custom_field_option" value="consultation_counter"> Консультация</label><br>
+      <label><input type="checkbox" name="custom_field_option" value="error_counter"> Ошибка пакета</label><br>
+      <button type="button" id="submit-selection">Отправить</button>
+      <button type="button" id="close-modal-button">Отмена</button>
+    </form>
+  </div>
+</div>
+
+<script>
+       document.addEventListener('DOMContentLoaded', function() {
+              var modal = document.getElementById('custom-field-modal');
+              var openModalButton = document.getElementById('open-modal-button');
+              var closeModalButton = document.getElementById('close-modal-button');
+              var submitSelection = document.getElementById('submit-selection');
+
+              // Проверяем, существует ли кнопка перед тем, как назначить обработчик
+              if (openModalButton) {
+                     // Открыть модальное окно
+                     openModalButton.onclick = function(event) {
+                            event.preventDefault(); // Остановить переход по ссылке
+                            modal.style.display = 'block';
+                     };
+              }
+
+              // Закрыть модальное окно
+              closeModalButton.onclick = function() {
+                     modal.style.display = 'none';
+              };
+
+              // Отправить выбранные данные на сервер для обработки
+              submitSelection.onclick = function() {
+                     var selectedOptions = [];
+                     var checkboxes = document.querySelectorAll('input[name="custom_field_option"]:checked');
+                     checkboxes.forEach(function(checkbox) {
+                            selectedOptions.push(checkbox.value);
+                     });
+
+                     if (selectedOptions.length > 0) {
+                            // Получаем URL для запроса
+                            var issueId = <%= @issue.id %>;
+                            var url = '<%= change_status_task_status_changer_path(issue_id: @issue.id) %>';
+
+                            // Получаем CSRF токен
+                            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                            // Отправляем AJAX запрос с выбранными вариантами
+                            fetch(url, {
+                                   method: 'POST',
+                                   headers: {
+                                          'Content-Type': 'application/json',
+                                          'X-CSRF-Token': token // Используем правильный токен CSRF
+                                   },
+                                   body: JSON.stringify({ custom_field_options: selectedOptions })
+                            }).then(function(response) {
+                                   return response.json();
+                            }).then(function(data) {
+                                   if (data.success) {
+                                          alert('Поля обновлены успешно');
+                                          window.location.reload(); // Перезагружаем страницу для обновления данных
+                                   } else {
+                                          alert('Произошла ошибка: ' + data.message);
+                                   }
+                            }).catch(function(error) {
+                                   alert('Произошла ошибка: ' + error);
+                            });
+                     } else {
+                            alert('Выберите хотя бы один вариант для обновления.');
+                     }
+                     modal.style.display = 'none';
+              };
+       });
+
+</script>
+
